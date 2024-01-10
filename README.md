@@ -21,7 +21,7 @@ First download the training/validation/test data from WMT/WAT/CC-align/FLores/Ta
 
 ## Step 2: Train the SixT+ model with two-stage training
 
-The proposed SixT+ model can be trained with the processed dataset. `bash scripts/run_train_sixtp.sh` to train SixT+ model in two training stages. More details are in the shell scripts.
+The proposed SixT+ model can be trained with the processed dataset. `bash scripts/run_sixtp.sh` to train SixT+ model in two training stages. More details are in the shell scripts.
 
 
 

@@ -24,7 +24,7 @@ class RobertaHubInterface(nn.Module):
         self.model = model
 
         from omegaconf import OmegaConf
-        bpe_set = OmegaConf.create({'sentencepiece_model':'/path/to/your/work/location/models/xlmrL_base/sentencepiece.bpe.model', '_name':'sentencepiece'})
+        bpe_set = OmegaConf.create({'sentencepiece_model':'/home/troiss/acl22-sixtp/models/xlmrL_base/sentencepiece.bpe.model', '_name':'sentencepiece'})
         
         self.bpe = encoders.build_bpe(bpe_set)
 

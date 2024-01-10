@@ -137,3 +137,6 @@ experimental/*
 
 # Weights and Biases logs
 wandb/
+models/sixtp_2stage_xlmr_2stage_posdrop_xlmrL_m2En/checkpoint_last.pt
+models/sixtp_2stage_xlmr_2stage_posdrop_xlmrL_m2m/checkpoint_best.pt
+*.pt

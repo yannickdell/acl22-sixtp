@@ -7,19 +7,19 @@ train_sixtp_first_stage(){
     
     if [[ $config == *"m2En"* ]] ; then
         echo "Now train the many-to-English SixT+ model."
-        lang_pairs="de-en,es-en,fi-en,hi-en,ru-en,zh-en"
+        lang_pairs="de-en,fr-en,vi-en"
         lang_proj=""
     else
         echo "Now train the many-to-many SixT+ model."
-        lang_pairs="de-en,es-en,fi-en,hi-en,ru-en,zh-en,en-de,en-es,en-fi,en-hi,en-ru,en-zh"
+        lang_pairs="de-en,fr-en,vi-en,en-de,en-fr,en-vi"
         lang_proj="--enable-lang-proj"
     fi 
-    lang_dict="en,de,es,fi,hi,ru,zh"
+    lang_dict="en,de,fr,vi"
     MaxUpdates=100000
 
     ## we simulate the 128 GPUs by setting update_freq=8 while using 32 GPUs
 
-    python -m torch.distributed.launch --nproc_per_node=8 --nnodes=4 --node_rank=$OMPI_COMM_WORLD_RANK --master_addr="$MASTER_ADDR" --master_port=$MASTER_PORT \
+    python -m torch.distributed.launch --nproc_per_node=1 --nnodes=1 --node_rank=0 --master_addr="localhost" --master_port=12355 \
         train.py $fseq  --save-dir $modeldir  --seed 16 --fp16  ${lang_proj}  \
         --arch transformer --task translation_multi_simple_epoch --sampling-method 'temperature'  --sampling-temperature 5  \
         --decoder-ffn-embed-dim 3072 --decoder-attention-heads 16 --decoder-layers 12 --encoder-embed-dim 1024 --decoder-embed-dim 1024 \
@@ -41,19 +41,19 @@ train_sixtp_second_stage(){
     
     if [[ $config == *"m2En"* ]] ; then
         echo "Now train the many-to-English SixT+ model."
-        lang_pairs="de-en,es-en,fi-en,hi-en,ru-en,zh-en"
+        lang_pairs="de-en,fr-en,vi-en"
         lang_proj=""
     else
         echo "Now train the many-to-many SixT+ model."
-        lang_pairs="de-en,es-en,fi-en,hi-en,ru-en,zh-en,en-de,en-es,en-fi,en-hi,en-ru,en-zh"
+        lang_pairs="de-en,fr-en,vi-en,en-de,en-fr,en-vi"
         lang_proj="--enable-lang-proj"
     fi 
-    lang_dict="en,de,es,fi,hi,ru,zh"
+    lang_dict="en,de,fr,vi"
     MaxUpdates=10000
 
     ## we simulate the 128 GPUs by setting update_freq=16 while using 32 GPUs
 
-    python -m torch.distributed.launch --nproc_per_node=8 --nnodes=4 --node_rank=$OMPI_COMM_WORLD_RANK --master_addr="$MASTER_ADDR" --master_port=$MASTER_PORT \
+    python -m torch.distributed.launch --nproc_per_node=1 --nnodes=1 --node_rank=0 --master_addr="localhost" --master_port=12355 \
         train.py $fseq --save-dir $modeldir  --seed 16 --fp16 --resdrop-layer 22  ${lang_proj} \
         --arch transformer --task translation_multi_simple_epoch --sampling-method 'temperature'  --sampling-temperature 5  \
         --decoder-ffn-embed-dim 3072 --decoder-attention-heads 16 --decoder-layers 12 --encoder-embed-dim 1024 --decoder-embed-dim 1024 \
@@ -77,16 +77,16 @@ run_on_testsets(){
     src=$1  && tgt=$2
     max_token=5000
 
-    lang_dict="en,de,es,fi,hi,ru,zh"
+    lang_dict="en,de,fr,vi"
     config='m2m'  ## ['m2En', 'm2m']
     if [[ $config == *"m2En"* ]] ; then
         echo "Now train the many-to-English SixT+ model."
-        lang_pairs="de-en,es-en,fi-en,hi-en,ru-en,zh-en"
+        lang_pairs="de-en,fr-en,vi-en"
         lang_proj=""
         enable_lang_proj='False'
     else
         echo "Now train the many-to-many SixT+ model."
-        lang_pairs="de-en,es-en,fi-en,hi-en,ru-en,zh-en,en-de,en-es,en-fi,en-hi,en-ru,en-zh"
+        lang_pairs="de-en,fr-en,vi-en,en-de,en-fr,en-vi"
         lang_proj="--enable-lang-proj"
         enable_lang_proj='True'
     fi 
@@ -105,7 +105,7 @@ run_on_testsets(){
         --langs ${lang_dict} --task translation_multi_simple_epoch 2>&1 | tee $resdir/gen_out
 
     cat $resdir/gen_out | grep -P "^H" | sort -V | cut -f 3-  > $resdir/decoding.txt
-    python scripts/his/spm_decode.py --model $WORKLOC/models/xlmrL_base/sentencepiece.bpe.model \
+    python scripts/tools/spm_decode.py --model $WORKLOC/models/xlmrL_base/sentencepiece.bpe.model \
         --input $resdir/decoding.txt > $resdir/decoding.detok
 
     echo "====BLEU score for ${src}-2-$tgt is ...."
@@ -114,8 +114,8 @@ run_on_testsets(){
 }
 
 export MPLM=xlmrL
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-export WORKLOC=/path/to/your/work/location
+export CUDA_VISIBLE_DEVICES=0
+export WORKLOC=/home/troiss/acl22-sixtp
 
 
 ##=======================================
@@ -134,7 +134,7 @@ train_sixtp_second_stage
 
 echo "Step 3: test the trained model on NMT testsets"
 tgt=en
-for src in 'de' 'es' 'ro'  'fi' 'lv' 'et' 'hi' 'ne' 'si' 'gu' 'zh' 'ja' 'ko' 'nl' 'it' 'ru' 'pl' 'tr' 'kk' 'my' 'km' 'ar' 'ps'; do 
+for src in 'de' 'fr' 'vi'; do 
     echo "Start to translate ${src} testsets to ${tgt}."
     run_on_testsets  $src $tgt
 done

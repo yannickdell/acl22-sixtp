@@ -7,9 +7,9 @@ binarize_fairseq_dataset(){
     fseq=$WORKLOC/fseq
     mkdir -p $raw $bpe $fseq 
 
-    for src in 'de' 'es' 'fi' 'hi' 'ru' 'zh'; do 
+    for src in 'de' 'fr' 'vi'; do 
         for f in "valid.$src-en.$src" "valid.$src-en.en" "train.$src-en.$src" "train.$src-en.en"; do 
-            python scripts/his/spm_encode.py --model $WORKLOC/models/xlmrL_base/sentencepiece.bpe.model  \
+            python scripts/tools/spm_encode.py --model $WORKLOC/models/xlmrL_base/sentencepiece.bpe.model  \
                 --inputs $raw/$f --outputs $bpe/$f
         done 
         python fairseq_cli/preprocess.py -s $src -t $tgt --dataset-impl lazy \
@@ -22,7 +22,7 @@ binarize_fairseq_dataset(){
 
 
 export CUDA_VISIBLE_DEVICES=0
-export WORKLOC=/path/to/your/work/location 
+export WORKLOC=/home/troiss/acl22-sixtp
 
 ## First download the parallel corpora from urls in the appendix, put them in the $WORKLOC/raw path. All texts are supposed to be detokenized before running this script. 
 ## The dataset raw files are named with {train,valid,test}.{$src-en}.{$src,en}, e.g, train.de-en.de
